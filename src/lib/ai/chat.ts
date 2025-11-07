@@ -25,9 +25,12 @@ export async function generateChatResponse(
   }));
 
   // Determine if query is code-related
-  const codeKeywords = /\b(code|function|implementation|how does|file|class|component|api|bug|error|feature)\b/i;
-  const userKeywords = /\b(who is|who are|contributor|user|author|created by|made by)\b/i;
-  const isCodeQuery = codeKeywords.test(userMessage) && !userKeywords.test(userMessage);
+  const codeKeywords =
+    /\b(code|function|implementation|how does|file|class|component|api|bug|error|feature)\b/i;
+  const userKeywords =
+    /\b(who is|who are|contributor|user|author|created by|made by)\b/i;
+  const isCodeQuery =
+    codeKeywords.test(userMessage) && !userKeywords.test(userMessage);
 
   // Fetch relevant code snippets only for code-related queries
   let codeContext = "";
@@ -57,7 +60,7 @@ export async function generateChatResponse(
 
   try {
     const result = await generateText({
-      model: openai("gpt-4o-mini"),
+      model: openai("gpt-4o"),
       system: getSystemPrompt(),
       messages,
       tools: allTools,
