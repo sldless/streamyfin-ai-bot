@@ -17,20 +17,5 @@ services:
       timeout: 5s
       retries: 5
 
-  # GitHub MCP Server for local development
-  github-mcp:
-    image: node:24-alpine
-    container_name: streamyfin-github-mcp-local
-    working_dir: /app
-    environment:
-      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}
-      PORT: 3001
-    command: >
-      sh -c "npm install -g @modelcontextprotocol/server-github &&
-             npx @modelcontextprotocol/server-github"
-    ports:
-      - "3001:3001"
-    restart: unless-stopped
-
 volumes:
   postgres_data_local:

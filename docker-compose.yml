@@ -30,8 +30,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      github-mcp:
-        condition: service_started
     environment:
       # Discord
       DISCORD_TOKEN: ${DISCORD_TOKEN}
@@ -44,9 +42,8 @@ services:
       # Database
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/streamyfin_bot
 
-      # GitHub MCP
+      # GitHub
       GITHUB_TOKEN: ${GITHUB_TOKEN}
-      GITHUB_MCP_SERVER_URL: http://github-mcp:3001
 
       # App
       NODE_ENV: production
@@ -57,23 +54,6 @@ services:
       - "3000:3000"
     volumes:
       - ./codebase:/app/codebase
-    networks:
-      - streamyfin-network
-    restart: unless-stopped
-
-  # GitHub MCP Server
-  github-mcp:
-    image: node:20-alpine
-    container_name: streamyfin-github-mcp
-    working_dir: /app
-    environment:
-      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}
-      PORT: 3001
-    command: >
-      sh -c "npm install -g @modelcontextprotocol/server-github &&
-             npx @modelcontextprotocol/server-github"
-    ports:
-      - "3001:3001"
     networks:
       - streamyfin-network
     restart: unless-stopped

@@ -1,6 +1,6 @@
 # Streamyfin AI Bot
 
-A high-performance Discord AI bot built with **Bun** and **Drizzle ORM** featuring codebase embeddings, GitHub MCP integration, and conversation history.
+A high-performance Discord AI bot built with **Bun** and **Drizzle ORM** featuring codebase embeddings, GitHub integration, and conversation history.
 
 ## Tech Stack
 
@@ -9,7 +9,7 @@ A high-performance Discord AI bot built with **Bun** and **Drizzle ORM** featuri
 - **PostgreSQL + pgvector** - Vector database for embeddings
 - **discord.js** - Discord bot client
 - **Vercel AI SDK** - OpenAI integration with function calling
-- **GitHub MCP** - Model Context Protocol for GitHub data
+- **Octokit** - GitHub REST API integration
 - **Docker** - Containerized deployment
 
 ## Features
@@ -240,8 +240,8 @@ https://discord.com/api/oauth2/authorize?client_id=YOUR_APP_ID&permissions=27487
 │   │   ├── discord/         # Discord bot client
 │   │   ├── embeddings/      # Vector embeddings
 │   │   ├── github/          
-│   │   │   ├── api.ts       # GitHub API client
-│   │   │   └── mcp-client.ts # GitHub MCP client
+│   │   │   ├── api.ts       # GitHub API for file operations
+│   │   │   └── mcp-client.ts # GitHub API for issues/PRs
 │   │   └── message-history/ # Chat history
 ├── scripts/                  # Utility scripts
 └── docker-compose.yml       # Multi-container setup

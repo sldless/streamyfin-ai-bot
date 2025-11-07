@@ -1,40 +1,17 @@
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { Octokit } from "@octokit/rest";
 
-let mcpClient: Client | null = null;
+let octokit: Octokit | null = null;
 
-export async function getMCPClient(): Promise<Client> {
-  if (!mcpClient) {
+function getOctokit(): Octokit {
+  if (!octokit) {
     if (!process.env.GITHUB_TOKEN) {
-      throw new Error('GITHUB_TOKEN is not set. GitHub MCP features will be disabled.');
+      throw new Error('GITHUB_TOKEN is required');
     }
-
-    const transport = new StdioClientTransport({
-      command: 'npx',
-      args: [
-        '-y',
-        '@modelcontextprotocol/server-github',
-      ],
-      env: {
-        ...process.env,
-        GITHUB_PERSONAL_ACCESS_TOKEN: process.env.GITHUB_TOKEN,
-      },
+    octokit = new Octokit({
+      auth: process.env.GITHUB_TOKEN,
     });
-
-    mcpClient = new Client({
-      name: 'streamyfin-ai-bot',
-      version: '1.0.0',
-    }, {
-      capabilities: {
-        tools: {},
-      },
-    });
-
-    await mcpClient.connect(transport);
-    console.log('✓ GitHub MCP client connected');
   }
-
-  return mcpClient;
+  return octokit;
 }
 
 export interface GitHubIssue {
@@ -63,19 +40,25 @@ export async function listIssues(
   repo: string,
   state: 'open' | 'closed' | 'all' = 'open'
 ): Promise<GitHubIssue[]> {
-  const client = await getMCPClient();
+  const client = getOctokit();
   
   try {
-    const result = await client.callTool({
-      name: 'list_issues',
-      arguments: {
-        owner,
-        repo,
-        state,
-      },
+    const { data } = await client.issues.listForRepo({
+      owner,
+      repo,
+      state,
+      per_page: 100,
     });
 
-    return JSON.parse(result.content[0].text);
+    return data.map(issue => ({
+      number: issue.number,
+      title: issue.title,
+      state: issue.state,
+      html_url: issue.html_url,
+      created_at: issue.created_at,
+      updated_at: issue.updated_at,
+      body: issue.body || undefined,
+    }));
   } catch (error) {
     console.error('Error listing issues:', error);
     return [];
@@ -87,19 +70,24 @@ export async function getIssue(
   repo: string,
   issueNumber: number
 ): Promise<GitHubIssue | null> {
-  const client = await getMCPClient();
+  const client = getOctokit();
   
   try {
-    const result = await client.callTool({
-      name: 'get_issue',
-      arguments: {
-        owner,
-        repo,
-        issue_number: issueNumber,
-      },
+    const { data } = await client.issues.get({
+      owner,
+      repo,
+      issue_number: issueNumber,
     });
 
-    return JSON.parse(result.content[0].text);
+    return {
+      number: data.number,
+      title: data.title,
+      state: data.state,
+      html_url: data.html_url,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      body: data.body || undefined,
+    };
   } catch (error) {
     console.error('Error getting issue:', error);
     return null;
@@ -111,19 +99,26 @@ export async function listPullRequests(
   repo: string,
   state: 'open' | 'closed' | 'all' = 'open'
 ): Promise<GitHubPullRequest[]> {
-  const client = await getMCPClient();
+  const client = getOctokit();
   
   try {
-    const result = await client.callTool({
-      name: 'list_pull_requests',
-      arguments: {
-        owner,
-        repo,
-        state,
-      },
+    const { data } = await client.pulls.list({
+      owner,
+      repo,
+      state,
+      per_page: 100,
     });
 
-    return JSON.parse(result.content[0].text);
+    return data.map(pr => ({
+      number: pr.number,
+      title: pr.title,
+      state: pr.state,
+      html_url: pr.html_url,
+      created_at: pr.created_at,
+      updated_at: pr.updated_at,
+      body: pr.body || undefined,
+      merged_at: pr.merged_at || undefined,
+    }));
   } catch (error) {
     console.error('Error listing pull requests:', error);
     return [];
@@ -135,29 +130,28 @@ export async function getPullRequest(
   repo: string,
   prNumber: number
 ): Promise<GitHubPullRequest | null> {
-  const client = await getMCPClient();
+  const client = getOctokit();
   
   try {
-    const result = await client.callTool({
-      name: 'get_pull_request',
-      arguments: {
-        owner,
-        repo,
-        pull_number: prNumber,
-      },
+    const { data } = await client.pulls.get({
+      owner,
+      repo,
+      pull_number: prNumber,
     });
 
-    return JSON.parse(result.content[0].text);
+    return {
+      number: data.number,
+      title: data.title,
+      state: data.state,
+      html_url: data.html_url,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      body: data.body || undefined,
+      merged_at: data.merged_at || undefined,
+    };
   } catch (error) {
     console.error('Error getting pull request:', error);
     return null;
-  }
-}
-
-export async function closeMCPClient(): Promise<void> {
-  if (mcpClient) {
-    await mcpClient.close();
-    mcpClient = null;
   }
 }
 
