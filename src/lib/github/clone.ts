@@ -49,3 +49,4 @@ export async function updateRepository(repoPath: string): Promise<void> {
     throw new Error(`Failed to update repository: ${error}`);
   }
 }
+

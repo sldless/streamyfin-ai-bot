@@ -365,3 +365,4 @@ await db.insert(embeddings).values(data);
 - [Drizzle Studio](https://orm.drizzle.team/drizzle-studio/overview)
 - [pgvector with Drizzle](https://orm.drizzle.team/docs/extensions/pg#pgvector)
 
+
