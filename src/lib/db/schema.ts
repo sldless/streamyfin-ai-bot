@@ -22,7 +22,7 @@ export const embeddings = pgTable(
     content: text("content").notNull(),
     contentHash: text("content_hash").notNull(),
     chunkIndex: integer("chunk_index").notNull(),
-    vector: vector("vector", { dimensions: 1536 }).notNull(),
+    vector: vector("vector", { dimensions: 3072 }).notNull(),
     metadata: jsonb("metadata").default({}).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),

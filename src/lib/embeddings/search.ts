@@ -24,7 +24,7 @@ export async function searchEmbeddings(
 ): Promise<SearchResult[]> {
   // Generate embedding for search query
   const { embedding } = await embed({
-    model: openai.embedding("text-embedding-3-small"),
+    model: openai.embedding("text-embedding-3-large"),
     value: searchQuery,
   });
 

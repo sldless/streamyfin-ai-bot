@@ -174,7 +174,7 @@ async function processBatch(
   const texts = validChunks.map((chunk) => chunk.content);
 
   const { embeddings: vectors } = await embedMany({
-    model: openai.embedding("text-embedding-3-small"),
+    model: openai.embedding("text-embedding-3-large"),
     values: texts,
   });
 

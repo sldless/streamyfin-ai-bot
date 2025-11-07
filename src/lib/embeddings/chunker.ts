@@ -10,8 +10,9 @@ export interface CodeChunk {
 }
 
 // Approximate tokens (4 chars = 1 token)
-const MAX_CHUNK_SIZE = 2000; // ~500 tokens
-const OVERLAP_SIZE = 200; // ~50 tokens overlap
+// text-embedding-3-large supports up to 8191 tokens
+const MAX_CHUNK_SIZE = 24000; // ~6000 tokens
+const OVERLAP_SIZE = 1200; // ~300 tokens overlap
 
 export function chunkCode(
   content: string,
