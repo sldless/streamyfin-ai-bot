@@ -6,7 +6,9 @@ import {
   getIssue,
   listPullRequests,
   getPullRequest,
-} from '../github/mcp-client';
+  getUserInfo,
+  listContributors,
+} from '../github/client';
 
 export const searchCodebaseTool = tool({
   description: 'Search the codebase for relevant code snippets using semantic search. Use this to find code related to a specific topic or functionality.',
@@ -141,6 +143,70 @@ export const getGitHubPullRequestTool = tool({
   },
 });
 
+export const getUserContributionsTool = tool({
+  description: 'Get info about a GitHub user/contributor including their commits, issues, and PRs. Use this when asked about contributors, users, or their activity.',
+  parameters: z.object({
+    owner: z.string().describe('Repository owner'),
+    repo: z.string().describe('Repository name'),
+    username: z.string().describe('GitHub username or display name to search for'),
+  }),
+  execute: async ({ owner, repo, username }) => {
+    const { found, contributor, issues, pullRequests, isOwner } = await getUserInfo(owner, repo, username);
+    
+    if (!found) {
+      return {
+        found: false,
+        message: `User "${username}" is not a contributor to ${owner}/${repo}`,
+      };
+    }
+
+    return {
+      found: true,
+      username: contributor!.login,
+      profileUrl: contributor!.html_url,
+      totalCommits: contributor!.contributions,
+      isRepositoryOwner: isOwner,
+      totalIssues: issues.length,
+      totalPullRequests: pullRequests.length,
+      recentIssues: issues.slice(0, 5).map(i => ({
+        number: i.number,
+        title: i.title,
+        state: i.state,
+        url: i.html_url,
+        created: i.created_at,
+      })),
+      recentPullRequests: pullRequests.slice(0, 5).map(pr => ({
+        number: pr.number,
+        title: pr.title,
+        state: pr.state,
+        url: pr.html_url,
+        created: pr.created_at,
+        merged: pr.merged_at,
+      })),
+    };
+  },
+});
+
+export const listTopContributorsTool = tool({
+  description: 'List top contributors to the repository. Use this to see who has contributed most to the project.',
+  parameters: z.object({
+    owner: z.string().describe('Repository owner'),
+    repo: z.string().describe('Repository name'),
+    limit: z.number().optional().describe('Number of contributors to return (default: 10)'),
+  }),
+  execute: async ({ owner, repo, limit = 10 }) => {
+    const contributors = await listContributors(owner, repo);
+    return {
+      totalContributors: contributors.length,
+      topContributors: contributors.slice(0, limit).map(c => ({
+        username: c.login,
+        profileUrl: c.html_url,
+        contributions: c.contributions,
+      })),
+    };
+  },
+});
+
 export const allTools = {
   search_codebase: searchCodebaseTool,
   get_file_content: getFileContentTool,
@@ -148,5 +214,7 @@ export const allTools = {
   get_github_issue: getGitHubIssueTool,
   list_github_pull_requests: listGitHubPullRequestsTool,
   get_github_pull_request: getGitHubPullRequestTool,
+  get_user_contributions: getUserContributionsTool,
+  list_top_contributors: listTopContributorsTool,
 };
 

@@ -11,8 +11,9 @@ export interface CodeChunk {
 
 // Approximate tokens (4 chars = 1 token)
 // text-embedding-3-large supports up to 8191 tokens
-const MAX_CHUNK_SIZE = 24000; // ~6000 tokens
-const OVERLAP_SIZE = 1200; // ~300 tokens overlap
+// Using conservative limit to account for non-ASCII content (e.g., Arabic, Chinese)
+const MAX_CHUNK_SIZE = 16000; // ~4000 tokens (conservative for non-ASCII)
+const OVERLAP_SIZE = 800; // ~200 tokens overlap
 
 export function chunkCode(
   content: string,

@@ -24,24 +24,29 @@ export async function generateChatResponse(
     content: msg.content,
   }));
 
-  // Always fetch relevant code snippets from embeddings
-  const relevantCode = await searchEmbeddings(userMessage, 5, 0.6);
+  // Determine if query is code-related
+  const codeKeywords = /\b(code|function|implementation|how does|file|class|component|api|bug|error|feature)\b/i;
+  const userKeywords = /\b(who is|who are|contributor|user|author|created by|made by)\b/i;
+  const isCodeQuery = codeKeywords.test(userMessage) && !userKeywords.test(userMessage);
 
-  // Format relevant code context
+  // Fetch relevant code snippets only for code-related queries
   let codeContext = "";
-  if (relevantCode.length > 0) {
-    codeContext = "\n\n## Relevant Code Context\n";
-    relevantCode.forEach((result, idx) => {
-      const lines =
-        result.metadata.startLine && result.metadata.endLine
-          ? `Lines ${result.metadata.startLine}-${result.metadata.endLine}`
-          : "";
-      codeContext += `\n### ${idx + 1}. ${result.filePath} ${lines}\n`;
-      codeContext += `Similarity: ${(result.similarity * 100).toFixed(1)}%\n`;
-      codeContext += "```" + (result.metadata.language || "") + "\n";
-      codeContext += result.content + "\n";
-      codeContext += "```\n";
-    });
+  if (isCodeQuery) {
+    const relevantCode = await searchEmbeddings(userMessage, 5, 0.6);
+    if (relevantCode.length > 0) {
+      codeContext = "\n\n## Relevant Code Context\n";
+      relevantCode.forEach((result, idx) => {
+        const lines =
+          result.metadata.startLine && result.metadata.endLine
+            ? `Lines ${result.metadata.startLine}-${result.metadata.endLine}`
+            : "";
+        codeContext += `\n### ${idx + 1}. ${result.filePath} ${lines}\n`;
+        codeContext += `Similarity: ${(result.similarity * 100).toFixed(1)}%\n`;
+        codeContext += "```" + (result.metadata.language || "") + "\n";
+        codeContext += result.content + "\n";
+        codeContext += "```\n";
+      });
+    }
   }
 
   // Add current user message with code context

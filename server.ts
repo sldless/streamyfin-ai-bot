@@ -149,6 +149,79 @@ const server = Bun.serve({
         );
       }
 
+      // Mock Discord message endpoint for testing
+      if (url.pathname === "/api/test/message" && req.method === "POST") {
+        const body = await req.json();
+        const {
+          message,
+          channelId = "test-channel",
+          username = "test-user",
+        } = body;
+
+        if (!message) {
+          return Response.json(
+            { error: "Message is required" },
+            { status: 400, headers: corsHeaders }
+          );
+        }
+
+        const { generateChatResponse } = await import(
+          "./src/lib/ai/chat"
+        );
+        const { addMessageToHistory } = await import(
+          "./src/lib/message-history/store"
+        );
+
+        try {
+          // Store user message in history
+          await addMessageToHistory({
+            channelId,
+            messageId: `test-${Date.now()}`,
+            content: message,
+            authorId: "test-user-id",
+            authorName: username,
+            isBot: false,
+          });
+
+          // Generate AI response
+          const response = await generateChatResponse(
+            channelId,
+            message,
+            username
+          );
+
+          // Store bot response in history
+          await addMessageToHistory({
+            channelId,
+            messageId: `test-bot-${Date.now()}`,
+            content: response,
+            authorId: "bot-test-id",
+            authorName: "StreamyfinBot",
+            isBot: true,
+          });
+
+          return Response.json(
+            {
+              success: true,
+              message,
+              response,
+              channelId,
+              username,
+            },
+            { headers: corsHeaders }
+          );
+        } catch (error) {
+          console.error("Error in test message:", error);
+          return Response.json(
+            {
+              error: "Failed to generate response",
+              message: error instanceof Error ? error.message : "Unknown error",
+            },
+            { status: 500, headers: corsHeaders }
+          );
+        }
+      }
+
       // Default response
       return Response.json(
         {
@@ -160,6 +233,7 @@ const server = Bun.serve({
             syncStreamyfin: "POST /api/streamyfin/sync",
             generateEmbeddings: "POST /api/embeddings/generate",
             searchEmbeddings: "POST /api/embeddings/search",
+            testMessage: "POST /api/test/message",
           },
         },
         { headers: corsHeaders }
@@ -183,7 +257,8 @@ console.log("\nAvailable endpoints:");
 console.log(`  - GET  /health`);
 console.log(`  - POST /api/streamyfin/sync`);
 console.log(`  - POST /api/embeddings/generate`);
-console.log(`  - POST /api/embeddings/search\n`);
+console.log(`  - POST /api/embeddings/search`);
+console.log(`  - POST /api/test/message (testing)\n`);
 
 // Graceful shutdown
 process.on("SIGINT", () => {

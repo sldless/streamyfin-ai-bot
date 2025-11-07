@@ -6,9 +6,9 @@ A high-performance Discord AI bot built with **Bun** and **Drizzle ORM** featuri
 
 - **Bun** - Ultra-fast JavaScript runtime & server
 - **Drizzle ORM** - TypeScript-first SQL ORM
-- **PostgreSQL + pgvector** - Vector database for embeddings
+- **PostgreSQL + pgvecto.rs (VectorChord)** - High-performance vector database supporting 3072-dimensional embeddings
 - **discord.js** - Discord bot client
-- **Vercel AI SDK** - OpenAI integration with function calling
+- **Vercel AI SDK** - OpenAI text-embedding-3-large integration
 - **Octokit** - GitHub REST API integration
 - **Docker** - Containerized deployment
 
@@ -166,6 +166,23 @@ curl -X POST http://localhost:3000/api/embeddings/search \
   -d '{"query": "authentication", "limit": 5}'
 ```
 
+### Test Discord Message (Development)
+```bash
+curl -X POST http://localhost:3000/api/test/message \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Who is cagemaster?",
+    "channelId": "test-channel",
+    "username": "test-user"
+  }'
+```
+
+This endpoint simulates a Discord message without needing Discord. Perfect for:
+- Testing bot responses locally
+- Debugging AI behavior
+- CI/CD integration tests
+- Rapid development iteration
+
 ### Sync Streamyfin Codebase
 ```bash
 curl -X POST http://localhost:3000/api/streamyfin/sync \
@@ -246,7 +263,7 @@ https://discord.com/api/oauth2/authorize?client_id=YOUR_APP_ID&permissions=27487
 │   │   ├── embeddings/      # Vector embeddings
 │   │   ├── github/          
 │   │   │   ├── api.ts       # GitHub API for file operations
-│   │   │   └── mcp-client.ts # GitHub API for issues/PRs
+│   │   │   └── client.ts # GitHub API (Octokit) for issues/PRs
 │   │   └── message-history/ # Chat history
 ├── scripts/                  # Utility scripts
 └── docker-compose.yml       # Multi-container setup
@@ -267,6 +284,14 @@ docker-compose up -d
 3. Select Docker Compose deployment
 4. Set environment variables
 5. Deploy
+
+## Why VectorChord (pgvecto.rs)?
+
+- ✅ **High-dimensional vectors** - Supports full 3072 dimensions (vs pgvector's 2000 limit)
+- ✅ **Better performance** - Rust-based, optimized for large-scale vector operations
+- ✅ **HNSW indexing** - Fast approximate nearest neighbor search
+- ✅ **PostgreSQL native** - Drop-in replacement for pgvector
+- ✅ **Better for AI** - Perfect for text-embedding-3-large (3072 dims)
 
 ## Why Drizzle?
 
@@ -291,6 +316,11 @@ Edit `src/lib/ai/prompt.ts`
 
 ### Embedding Settings
 Edit `src/lib/embeddings/chunker.ts`
+
+Current settings:
+- **Model**: text-embedding-3-large (3072 dimensions)
+- **Chunk size**: 24,000 characters (~6000 tokens)
+- **Overlap**: 1,200 characters (~300 tokens)
 
 ### Database Schema
 Edit `src/lib/db/schema.ts` then run `bun run db:generate`

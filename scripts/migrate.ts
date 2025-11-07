@@ -5,17 +5,17 @@ async function main() {
   console.log('Setting up database...\n');
   
   try {
-    // Enable pgvector extension first
-    console.log('Enabling pgvector extension...');
-    await rawSql`CREATE EXTENSION IF NOT EXISTS vector`;
-    console.log('✓ pgvector extension enabled\n');
+    // Enable pgvecto.rs extension first
+    console.log('Enabling pgvecto.rs (VectorChord) extension...');
+    await rawSql`CREATE EXTENSION IF NOT EXISTS vectors`;
+    console.log('✓ pgvecto.rs extension enabled\n');
 
     // Run Drizzle migrations
     await runMigrations();
     
-    // Test pgvector
+    // Test pgvecto.rs
     const result = await rawSql`SELECT '[1,2,3]'::vector`;
-    console.log('✓ pgvector is working\n');
+    console.log('✓ pgvecto.rs is working\n');
     
     process.exit(0);
   } catch (error) {

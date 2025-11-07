@@ -32,10 +32,11 @@ export const embeddings = pgTable(
       table.filePath,
       table.chunkIndex
     ),
-    vectorIdx: index("embeddings_vector_idx").using(
-      "hnsw",
-      table.vector.op("vector_cosine_ops")
-    ),
+    // Vector index will be created manually with pgvecto.rs syntax
+    // vectorIdx: index("embeddings_vector_idx").using(
+    //   "hnsw",
+    //   table.vector.op("vector_cosine_ops")
+    // ),
     filePathIdx: index("embeddings_file_path_idx").on(table.filePath),
     contentHashIdx: index("embeddings_content_hash_idx").on(table.contentHash),
   })
