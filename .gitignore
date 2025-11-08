@@ -27,9 +27,6 @@ bun.lockb
 # TypeScript
 *.tsbuildinfo
 
-# Drizzle
-drizzle/
-
 # Codebase (user-specific)
 codebase/*
 !codebase/.gitkeep
