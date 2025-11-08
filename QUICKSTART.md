@@ -17,7 +17,7 @@ bun install
 ## Step 2: Start Infrastructure
 
 ```bash
-# Start PostgreSQL with pgvector and GitHub MCP server
+# Start PostgreSQL with pgvector
 docker-compose -f docker-compose.local.yml up -d
 
 # Wait for services to be ready (check with docker ps)
@@ -47,7 +47,6 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/streamyfin_bot
 
 # GitHub
 GITHUB_TOKEN=ghp_...
-GITHUB_MCP_SERVER_URL=http://localhost:3001
 
 # App
 NODE_ENV=development
@@ -201,14 +200,14 @@ mkdir -p codebase
 echo "console.log('test')" > codebase/test.ts
 ```
 
-### GitHub MCP not working
+### GitHub API not working
 
 ```bash
-# Check MCP server is running
-docker logs streamyfin-github-mcp-local
-
 # Verify GitHub token has correct permissions
 # Token needs: repo, read:org
+
+# Test token
+curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user
 ```
 
 ## Commands Reference
@@ -216,7 +215,7 @@ docker logs streamyfin-github-mcp-local
 ```bash
 # Development
 bun start                  # Start bot server with job processor
-bun run dev                # Start Next.js (if using web UI)
+bun run dev                # Start with auto-reload
 bun run bot:test           # Test bot connection only
 
 # Database

@@ -215,7 +215,7 @@ curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user
 ```bash
 # Development
 bun start                  # Start bot server with job processor
-bun run dev                # Start Next.js (if using web UI)
+bun run dev                # Start with auto-reload
 bun run bot:test           # Test bot connection only
 
 # Database
