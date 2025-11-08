@@ -44,6 +44,9 @@ services:
 
       # GitHub
       GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_OWNER: fredrikburmester
+      GITHUB_REPO: streamyfin
+      GITHUB_BRANCH: develop
 
       # App
       NODE_ENV: production
