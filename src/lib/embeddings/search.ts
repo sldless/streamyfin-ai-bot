@@ -5,6 +5,7 @@ import { embeddings } from "../db/schema";
 import { sql, gt, like } from "drizzle-orm";
 
 export interface SearchResult {
+  id?: number;
   filePath: string;
   content: string;
   similarity: number;
@@ -20,7 +21,8 @@ export interface SearchResult {
 export async function searchEmbeddings(
   searchQuery: string,
   limit: number = 5,
-  similarityThreshold: number = 0.1
+  similarityThreshold: number = 0.1,
+  learn: boolean = false
 ): Promise<SearchResult[]> {
   // Generate embedding for search query
   const { embedding } = await embed({
@@ -30,9 +32,12 @@ export async function searchEmbeddings(
 
   const vectorString = `[${embedding.join(",")}]`;
 
+  if (learn && limit <= 20) limit = Math.max(limit*5, 20)
+
   // Search for similar embeddings using cosine similarity
   const results = await db
     .select({
+      id: embeddings.id,
       filePath: embeddings.filePath,
       content: embeddings.content,
       similarity: sql<number>`1 - (${embeddings.vector} <=> ${vectorString}::vector)`,
@@ -44,6 +49,35 @@ export async function searchEmbeddings(
     )
     .orderBy(sql`1 - (${embeddings.vector} <=> ${vectorString}::vector) DESC`)
     .limit(limit);
+
+  if (learn) {
+    const weight = 0.2; 
+    const scored = results.map((r) => {
+      const meta: any = r.metadata || {};
+      let feedbackScore = typeof meta.feedbackScore === 'number' ? meta.feedbackScore : Number(meta.feedbackScore);
+      feedbackScore = feedbackScore / (1 + Math.abs(feedbackScore));
+      const score = r.similarity + (weight * feedbackScore);
+      return {
+        id: r.id,
+        filePath: r.filePath,
+        content: r.content,
+        similarity: r.similarity,
+        metadata: r.metadata as any,
+        score,
+      };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+
+    return scored.slice(0, limit).map((r) => ({
+      id: r.id,
+      filePath: r.filePath,
+      content: r.content,
+      similarity: r.similarity,
+      metadata: r.metadata,
+      score: r.score,
+    }));
+  }
 
   return results.map((row) => ({
     filePath: row.filePath,
