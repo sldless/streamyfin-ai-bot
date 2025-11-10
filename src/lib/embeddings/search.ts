@@ -16,6 +16,7 @@ export interface SearchResult {
     hasImports?: boolean;
     hasExports?: boolean;
   };
+  score?: number;
 }
 
 export async function searchEmbeddings(
@@ -32,7 +33,8 @@ export async function searchEmbeddings(
 
   const vectorString = `[${embedding.join(",")}]`;
 
-  if (learn && limit <= 20) limit = Math.max(limit*5, 20)
+  const originalLimit = limit;
+  if (learn && limit <= 20) limit = Math.max(limit * 5, 20);
 
   // Search for similar embeddings using cosine similarity
   const results = await db
@@ -54,7 +56,7 @@ export async function searchEmbeddings(
     const weight = 0.2; 
     const scored = results.map((r) => {
       const meta: any = r.metadata || {};
-      let feedbackScore = typeof meta.feedbackScore === 'number' ? meta.feedbackScore : Number(meta.feedbackScore);
+      let feedbackScore = typeof meta.feedbackScore === 'number' ? meta.feedbackScore : (Number(meta.feedbackScore) || 0);
       feedbackScore = feedbackScore / (1 + Math.abs(feedbackScore));
       const score = r.similarity + (weight * feedbackScore);
       return {
@@ -69,7 +71,7 @@ export async function searchEmbeddings(
 
     scored.sort((a, b) => b.score - a.score);
 
-    return scored.slice(0, limit).map((r) => ({
+    return scored.slice(0, originalLimit).map((r) => ({
       id: r.id,
       filePath: r.filePath,
       content: r.content,
@@ -104,4 +106,28 @@ export async function searchByFilePath(
     similarity: 1.0,
     metadata: row.metadata as any,
   }));
+}
+
+
+export async function getTopAIMessagesForQuery(query: string, limit: number = 2): Promise<{ content: string, feedbackScore: number }[]> {
+  const { embedding } = await embed({
+    model: openai.embedding("text-embedding-3-large"),
+    value: query,
+  });
+
+  const vectorString = `[${embedding.join(",")}]`;
+
+  const results = await db
+    .select({
+      id: embeddings.id,
+      content: embeddings.content,
+      feedbackScore: sql<number>`(metadata->>'feedbackScore')::float`,
+      similarity: sql<number>`1 - (${embeddings.vector} <=> ${vectorString}::vector)`,
+    })
+    .from(embeddings)
+    .where(sql`1 - (${embeddings.vector} <=> ${vectorString}::vector) > 0.1`)
+    .orderBy(sql`(metadata->>'feedbackScore')::float DESC`)
+    .limit(limit);
+
+  return results.map(r => ({ content: r.content, feedbackScore: r.feedbackScore ?? 0 }));
 }

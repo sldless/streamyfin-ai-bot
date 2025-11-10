@@ -6,6 +6,7 @@ import { db } from '../db/client';
 import { messageHistory, embeddings } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
 import { searchEmbeddings } from '../embeddings/search';
+import { getTopAIMessagesForQuery } from '../embeddings/search';
 
 export async function handleMessage(message: Message): Promise<void> {
   let reply;
@@ -33,7 +34,15 @@ export async function handleMessage(message: Message): Promise<void> {
     reply = await message.reply('Thinking...');
     const learningEmbed = await searchEmbeddings(content, 5, 0.1, true);
     const context = learningEmbed.map(c => c.content).join('\n---\n');
-    const prompt = `Based on the following context:\n${context}\nRespond to: ${content}`;
+
+    const aiexamples = await getTopAIMessagesForQuery(content, 2);
+    let examples = '';
+
+    if (aiexamples.length > 0) {
+      examples = 'Here are examples of strong replies:\n' + aiexamples.map(e => e.content).join('\n---\n') + '\n\n';
+    }
+
+    const prompt = `${examples}Based on the following context:\n${context}\nRespond to: ${content}`;
 
     // Generate AI response (this may take a few seconds)
     const response = await generateChatResponse(
@@ -134,7 +143,7 @@ async function updateRAGFeedback(channelId: string, messageId: string, feedbackT
 
       await db.update(embeddings).set({ metadata: meta, updatedAt: new Date() }).where(eq(embeddings.id, r.id));
     }
-    return `Thanks for your feedback! Succesfully updated!`
+    return `Thanks for your feedback! Successfully updated!`
   } catch (error) {
     console.error('Feedback error:', error);
   }
