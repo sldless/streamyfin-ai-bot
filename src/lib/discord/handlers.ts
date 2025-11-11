@@ -147,5 +147,6 @@ async function updateRAGFeedback(channelId: string, messageId: string, feedbackT
     return `Thanks for your feedback! Successfully updated!`
   } catch (error) {
     console.error('Feedback error:', error);
+    return 'Sorry, I encountered an error while processing your feedback.';
   }
 }
